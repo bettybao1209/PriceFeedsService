@@ -19,7 +19,7 @@ namespace PriceFeedService
         private static StorageMap price => Storage.CurrentContext.CreateMap(nameof(price));
         private static readonly UInt160 Owner = "NLq7pkzkWi1eZLi1thgm36KbGg6HYTM8Jv".ToScriptHash(); // Changed
 
-
+        public static UInt160 RegistryHash => Owner;
         public static bool RegisterProvider(UInt160 provider)
         {
             if (!Runtime.CheckWitness(Owner)) throw new Exception("Unauthorized!");
@@ -30,10 +30,10 @@ namespace PriceFeedService
             return true;
         }
 
-        public static UInt160[] GetAvailableProviders()
+        public static UInt160[] GetRegisteredProviders()
         {
             List<UInt160> ret = new List<UInt160>();
-            Iterator providersList = Storage.Find(Storage.CurrentContext, nameof(providers), FindOptions.KeysOnly);
+            Iterator providersList = Storage.Find(Storage.CurrentContext, nameof(providers), FindOptions.RemovePrefix | FindOptions.KeysOnly);
             while (providersList.Next())
             {
                 ret.Add((UInt160)providersList.Value);
@@ -50,25 +50,28 @@ namespace PriceFeedService
             return true;
         }
 
-        public static void UpdatePrice(UInt160 provider, string currentPrice)
+        public static void UpdatePrice(string symbol, string currentPrice)
         {
-            if (!Runtime.CheckWitness(provider)) throw new Exception("Unautherized!");
+            UInt160 provider = ExecutionEngine.CallingScriptHash;
             ProviderStatus status = ByteArray2ProviderStatus((byte[])providers.Get(provider));
             if (status == ProviderStatus.NotRegistered) throw new Exception("No such provider registered");
-            price.Put(provider, currentPrice);
+            StorageMap priceList = Storage.CurrentContext.CreateMap(StdLib.Serialize(provider));
+            priceList.Put(symbol, currentPrice);
         }
 
-        public static object GetLatestPrice()
+        public static object GetLatestPrice(string symbol)
         {
             Map<UInt160, string> priceMap = new Map<UInt160, string>();
-            Iterator<(UInt160, string)> priceList = (Iterator<(UInt160, string)>)Storage.Find(Storage.CurrentContext, nameof(price));
-            while (priceList.Next())
+            UInt160[] registeredProvider = GetRegisteredProviders();
+            foreach (UInt160 key in registeredProvider)
             {
-                priceMap[priceList.Value.Item1] = priceList.Value.Item2;
+                StorageMap priceList = Storage.CurrentContext.CreateMap(key);
+                priceMap[key] = priceList.Get(symbol);
             }
             return priceMap;
         }
-        public static object GetLatestPriceWithProvider(UInt160[] requiredProviders)
+
+        public static object GetLatestPriceWithProvider(UInt160[] requiredProviders, string symbol)
         {
             Map<UInt160, string> priceMap = new Map<UInt160, string>();
             if (providers != null && requiredProviders.Length > 0)
@@ -78,20 +81,39 @@ namespace PriceFeedService
                     ProviderStatus status = ByteArray2ProviderStatus((byte[])providers.Get(key));
                     if (status == ProviderStatus.Registered)
                     {
-                        priceMap[key] = price.Get(key);
+                        StorageMap priceList = Storage.CurrentContext.CreateMap(key);
+                        priceMap[key] = priceList.Get(symbol);
                     }
-                    return priceMap;
                 }
+                return priceMap;
             }
-            return GetLatestPrice();
+            return GetLatestPrice(symbol);
         }
 
+        public static void Update(ByteString nefFile, string manifest, object data)
+        {
+            if (!IsOwner()) throw new Exception("No authorization.");
+            ContractManagement.Update(nefFile, manifest, data);
+        }
+
+        public static void Destroy()
+        {
+            if (!IsOwner()) throw new Exception("No authorization.");
+            ContractManagement.Destroy();
+        }
+
+        private static bool IsOwner() => Runtime.CheckWitness(Owner);
         private static byte[] IssuerStatus2ByteArray(ProviderStatus value) => ((BigInteger)(int)value).ToByteArray();
 
         private static ProviderStatus ByteArray2ProviderStatus(byte[] value)
         {
             if (value == null || value.Length == 0) return ProviderStatus.NotRegistered;
             return (ProviderStatus)(int)value.ToBigInteger();
+        }
+
+        public static int test()
+        {
+            return 2;
         }
     }
 }

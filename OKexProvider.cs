@@ -1,4 +1,5 @@
 using Neo;
+using Neo.SmartContract;
 using Neo.SmartContract.Framework;
 using Neo.SmartContract.Framework.Services.Neo;
 using Neo.SmartContract.Framework.Services.System;
@@ -6,6 +7,7 @@ using System;
 
 namespace PriceFeedService
 {
+    [ContractPermission("0x7ee56a9fb2469901b5f74665e2939beb2c32161e", "updatePrice")]
     public class OKexProvider : SmartContract
     {
         public const string Prefix_Price_URL = "https://www.okex.com/api/v5/market/history-candles?bar=1m&limit=1";
@@ -17,6 +19,7 @@ namespace PriceFeedService
         private static StorageMap price => Storage.CurrentContext.CreateMap(nameof(price));
         private static StorageMap tradingPair => Storage.CurrentContext.CreateMap(nameof(tradingPair));
         private static readonly UInt160 Owner = "NLq7pkzkWi1eZLi1thgm36KbGg6HYTM8Jv".ToScriptHash(); // Changed
+        private static readonly UInt160 ProviderRegistry = (UInt160)"0x7ee56a9fb2469901b5f74665e2939beb2c32161e".HexToBytes(true);
 
         public static string Name => "OKexProvider";
 
@@ -34,14 +37,7 @@ namespace PriceFeedService
 
             object[] arr = (object[])StdLib.JsonDeserialize(result); // ["11988.2"]
             string value = (string)arr[0];
-            price.Put(userdata, value);
-        }
-
-        public static string GetLatestPrice(string symbol)
-        {
-            string latestPrice = price.Get(nameof(price) + symbol);
-            if (latestPrice == null) throw new Exception("asset price does not exist");
-            return latestPrice;
+            Contract.Call(ProviderRegistry, "updatePrice", CallFlags.All, new object[] { userdata, value });
         }
 
         public static void Update(ByteString nefFile, string manifest, object data)
@@ -57,5 +53,10 @@ namespace PriceFeedService
         }
 
         private static bool IsOwner() => Runtime.CheckWitness(Owner);
+
+        public static int test()
+        {
+            return 1;
+        }
     }
 }
