@@ -52,10 +52,38 @@ namespace PriceFeedService
 
         public static void UpdatePrice(UInt160 provider, string currentPrice)
         {
-            if (ExecutionEngine.CallingScriptHash != provider) throw new Exception("Unautherized!");
+            if (!Runtime.CheckWitness(provider)) throw new Exception("Unautherized!");
             ProviderStatus status = ByteArray2ProviderStatus((byte[])providers.Get(provider));
             if (status == ProviderStatus.NotRegistered) throw new Exception("No such provider registered");
             price.Put(provider, currentPrice);
+        }
+
+        public static object GetLatestPrice()
+        {
+            Map<UInt160, string> priceMap = new Map<UInt160, string>();
+            Iterator<(UInt160, string)> priceList = (Iterator<(UInt160, string)>)Storage.Find(Storage.CurrentContext, nameof(price));
+            while (priceList.Next())
+            {
+                priceMap[priceList.Value.Item1] = priceList.Value.Item2;
+            }
+            return priceMap;
+        }
+        public static object GetLatestPriceWithProvider(UInt160[] requiredProviders)
+        {
+            Map<UInt160, string> priceMap = new Map<UInt160, string>();
+            if (providers != null && requiredProviders.Length > 0)
+            {
+                foreach (UInt160 key in requiredProviders)
+                {
+                    ProviderStatus status = ByteArray2ProviderStatus((byte[])providers.Get(key));
+                    if (status == ProviderStatus.Registered)
+                    {
+                        priceMap[key] = price.Get(key);
+                    }
+                    return priceMap;
+                }
+            }
+            return GetLatestPrice();
         }
 
         private static byte[] IssuerStatus2ByteArray(ProviderStatus value) => ((BigInteger)(int)value).ToByteArray();
