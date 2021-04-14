@@ -17,7 +17,8 @@ namespace PriceFeedService
     [ContractPermission("0xfffdc93764dbaddd97c48f252a53ea4643faa3fd", "destroy", "update")]
     public class ProviderRegistry : SmartContract
     {
-        private static StorageMap providers => new StorageMap(Storage.CurrentContext, nameof(providers));
+        private const byte Prefix_Providers = 1;
+        private static StorageMap providers => new StorageMap(Storage.CurrentContext, Prefix_Providers);
 
         [InitialValue("NWhJATyChXvaBqS9debbk47Uf2X33WtHtL", ContractParameterType.Hash160)]
         private static readonly UInt160 Owner = default; //  Replace it with your own address
@@ -35,7 +36,7 @@ namespace PriceFeedService
         public static UInt160[] GetRegisteredProviders()
         {
             List<UInt160> ret = new List<UInt160>();
-            Iterator providersList = Storage.Find(Storage.CurrentContext, nameof(providers), FindOptions.RemovePrefix | FindOptions.KeysOnly);
+            Iterator providersList = Storage.Find(Storage.CurrentContext, new byte[] { Prefix_Providers }, FindOptions.RemovePrefix | FindOptions.KeysOnly);
             while (providersList.Next())
             {
                 ret.Add((UInt160)providersList.Value);
