@@ -1,13 +1,14 @@
 using Neo;
 using Neo.SmartContract;
 using Neo.SmartContract.Framework;
-using Neo.SmartContract.Framework.Services.Neo;
-using Neo.SmartContract.Framework.Services.System;
+using Neo.SmartContract.Framework.Native;
+using Neo.SmartContract.Framework.Services;
 using System;
 
 namespace PriceFeedService
 {
-    [ContractPermission("0x7ee56a9fb2469901b5f74665e2939beb2c32161e", "updatePrice")]
+    [ContractPermission("0x02ed653865863313fdf09dffa20303846046aee9", "updatePrice")]
+    [ContractPermission("0xfffdc93764dbaddd97c48f252a53ea4643faa3fd", "destroy", "update")]
     public class OKexProvider : SmartContract
     {
         public const string Prefix_Price_URL = "https://www.okex.com/api/v5/market/history-candles?bar=1m&limit=1";
@@ -16,10 +17,13 @@ namespace PriceFeedService
         // { "code": "0", "msg": "", "data": [["1597026360000","11983.2","11988.5","11980.2","11988.2","26.43284234","316742.81553508"]]}
         public const string filter = "$.data[0][4]";
         public const long gasForResponse = Oracle.MinimumResponseFee; // TBD
-        private static StorageMap price => Storage.CurrentContext.CreateMap(nameof(price));
-        private static StorageMap tradingPair => Storage.CurrentContext.CreateMap(nameof(tradingPair));
-        private static readonly UInt160 Owner = "NLq7pkzkWi1eZLi1thgm36KbGg6HYTM8Jv".ToScriptHash(); // Changed
-        private static readonly UInt160 ProviderRegistry = (UInt160)"0x7ee56a9fb2469901b5f74665e2939beb2c32161e".HexToBytes(true);
+        private static StorageMap price => new StorageMap(Storage.CurrentContext, nameof(price));
+        private static StorageMap tradingPair => new StorageMap(Storage.CurrentContext, nameof(tradingPair));
+
+        [InitialValue("NWhJATyChXvaBqS9debbk47Uf2X33WtHtL", ContractParameterType.Hash160)]
+        private static readonly UInt160 Owner = default; //  Replace it with your own address
+        [InitialValue("e9ae4660840303a2ff9df0fd133386653865ed02", ContractParameterType.ByteArray)]
+        private static readonly UInt160 ProviderRegistry = default;
 
         public static string Name => "OKexProvider";
 
@@ -32,7 +36,7 @@ namespace PriceFeedService
 
         public static void GetLatestPriceCallback(string url, string userdata, OracleResponseCode code, string result)
         {
-            if (ExecutionEngine.CallingScriptHash != Oracle.Hash) throw new Exception("Unauthorized!");
+            if (Runtime.CallingScriptHash != Oracle.Hash) throw new Exception("No authorization");
             if (code != OracleResponseCode.Success) throw new Exception("Oracle response failure with code " + (byte)code);
 
             object[] arr = (object[])StdLib.JsonDeserialize(result); // ["11988.2"]

@@ -1,7 +1,8 @@
 using Neo;
+using Neo.SmartContract;
 using Neo.SmartContract.Framework;
-using Neo.SmartContract.Framework.Services.Neo;
-using Neo.SmartContract.Framework.Services.System;
+using Neo.SmartContract.Framework.Native;
+using Neo.SmartContract.Framework.Services;
 using System;
 using System.Numerics;
 
@@ -13,17 +14,18 @@ namespace PriceFeedService
         Registered = 1
     }
 
-    public class ProviderRegister : SmartContract
+    [ContractPermission("0xfffdc93764dbaddd97c48f252a53ea4643faa3fd", "destroy", "update")]
+    public class ProviderRegistry : SmartContract
     {
-        private static StorageMap providers => Storage.CurrentContext.CreateMap(nameof(providers));
-        private static StorageMap price => Storage.CurrentContext.CreateMap(nameof(price));
-        private static readonly UInt160 Owner = "NLq7pkzkWi1eZLi1thgm36KbGg6HYTM8Jv".ToScriptHash(); // Changed
+        private static StorageMap providers => new StorageMap(Storage.CurrentContext, nameof(providers));
 
-        public static UInt160 RegistryHash => Owner;
+        [InitialValue("NWhJATyChXvaBqS9debbk47Uf2X33WtHtL", ContractParameterType.Hash160)]
+        private static readonly UInt160 Owner = default; //  Replace it with your own address
+
         public static bool RegisterProvider(UInt160 provider)
         {
-            if (!Runtime.CheckWitness(Owner)) throw new Exception("Unauthorized!");
-            ProviderStatus status = ByteArray2ProviderStatus((byte[])providers.Get(provider));
+            if (!Runtime.CheckWitness(Owner)) throw new Exception("No authorization");
+            ProviderStatus status = ByteString2ProviderStatus(providers.Get(provider));
             if (status == ProviderStatus.Registered) throw new Exception("Provider already registered");
             byte[] registered = IssuerStatus2ByteArray(ProviderStatus.Registered);
             providers.Put(provider, (ByteString)registered);
@@ -43,8 +45,8 @@ namespace PriceFeedService
 
         public static bool UnRegisterProvider(UInt160 provider)
         {
-            if (!Runtime.CheckWitness(Owner)) throw new Exception("Unauthorized!");
-            ProviderStatus status = ByteArray2ProviderStatus((byte[])providers.Get(provider));
+            if (!Runtime.CheckWitness(Owner)) throw new Exception("No authorization");
+            ProviderStatus status = ByteString2ProviderStatus(providers.Get(provider));
             if (status == ProviderStatus.NotRegistered) throw new Exception("No such provider registered");
             providers.Delete(provider);
             return true;
@@ -52,42 +54,38 @@ namespace PriceFeedService
 
         public static void UpdatePrice(string symbol, string currentPrice)
         {
-            UInt160 provider = ExecutionEngine.CallingScriptHash;
-            ProviderStatus status = ByteArray2ProviderStatus((byte[])providers.Get(provider));
+            UInt160 provider = Runtime.CallingScriptHash;
+            ProviderStatus status = ByteString2ProviderStatus(providers.Get(provider));
             if (status == ProviderStatus.NotRegistered) throw new Exception("No such provider registered");
-            StorageMap priceList = Storage.CurrentContext.CreateMap(StdLib.Serialize(provider));
+            StorageMap priceList = new StorageMap(Storage.CurrentContext, provider);
             priceList.Put(symbol, currentPrice);
         }
 
-        public static object GetLatestPrice(string symbol)
-        {
-            Map<UInt160, string> priceMap = new Map<UInt160, string>();
-            UInt160[] registeredProvider = GetRegisteredProviders();
-            foreach (UInt160 key in registeredProvider)
-            {
-                StorageMap priceList = Storage.CurrentContext.CreateMap(key);
-                priceMap[key] = priceList.Get(symbol);
-            }
-            return priceMap;
-        }
-
-        public static object GetLatestPriceWithProvider(UInt160[] requiredProviders, string symbol)
+        public static object GetLatestPrice(string symbol, UInt160[] requiredProviders = null)
         {
             Map<UInt160, string> priceMap = new Map<UInt160, string>();
             if (providers != null && requiredProviders.Length > 0)
             {
                 foreach (UInt160 key in requiredProviders)
                 {
-                    ProviderStatus status = ByteArray2ProviderStatus((byte[])providers.Get(key));
+                    ProviderStatus status = ByteString2ProviderStatus(providers.Get(key));
                     if (status == ProviderStatus.Registered)
                     {
-                        StorageMap priceList = Storage.CurrentContext.CreateMap(key);
+                        StorageMap priceList = new StorageMap(Storage.CurrentContext, key);
                         priceMap[key] = priceList.Get(symbol);
                     }
                 }
-                return priceMap;
             }
-            return GetLatestPrice(symbol);
+            else
+            {
+                UInt160[] registeredProvider = GetRegisteredProviders();
+                foreach (UInt160 key in registeredProvider)
+                {
+                    StorageMap priceList = new StorageMap(Storage.CurrentContext, key);
+                    priceMap[key] = priceList.Get(symbol);
+                }
+            }
+            return priceMap;
         }
 
         public static void Update(ByteString nefFile, string manifest, object data)
@@ -105,15 +103,15 @@ namespace PriceFeedService
         private static bool IsOwner() => Runtime.CheckWitness(Owner);
         private static byte[] IssuerStatus2ByteArray(ProviderStatus value) => ((BigInteger)(int)value).ToByteArray();
 
-        private static ProviderStatus ByteArray2ProviderStatus(byte[] value)
+        private static ProviderStatus ByteString2ProviderStatus(ByteString value)
         {
             if (value == null || value.Length == 0) return ProviderStatus.NotRegistered;
-            return (ProviderStatus)(int)value.ToBigInteger();
+            return (ProviderStatus)(int)(BigInteger)value;
         }
 
         public static int test()
         {
-            return 2;
+            return 10;
         }
     }
 }
