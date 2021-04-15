@@ -15,7 +15,7 @@ namespace PriceFeedService
     }
 
     [ContractPermission("0xfffdc93764dbaddd97c48f252a53ea4643faa3fd", "destroy", "update")]
-    [ContractPermission("*", "getLatestPriceRequest")]
+    [ContractPermission("*", "getPriceRequest")]
     public partial class ProviderManager : SmartContract
     {
         private const byte Prefix_Providers = 1;
@@ -24,27 +24,28 @@ namespace PriceFeedService
         [InitialValue("NWhJATyChXvaBqS9debbk47Uf2X33WtHtL", ContractParameterType.Hash160)]
         private static readonly UInt160 Owner = default; //  Replace it with your own address
 
-        public static bool TriggerCurrentPrice(string symbol)
+        public static uint TriggerCurrentPrice(string symbol)
         {
-            ulong currentTime = Ledger.GetBlock(Ledger.CurrentIndex).Timestamp;
             UInt160[] registeredProviders = GetRegisteredProviders();
             foreach (UInt160 provider in registeredProviders)
             {
-                Contract.Call(provider, "getLatestPriceRequest", CallFlags.All, new object[] { currentTime, symbol });
+                Contract.Call(provider, "getPriceRequest", CallFlags.All, new object[] { Ledger.CurrentIndex, symbol });
             }
-            return true;
+            return Ledger.CurrentIndex;
         }
 
-        public static void UpdatePriceByProvider(string symbol, string currentPrice)
+        public static void UpdatePriceByProvider(uint blockIndex, string symbol, string currentPrice)
         {
             UInt160 provider = Runtime.CallingScriptHash;
             ProviderStatus status = ByteString2ProviderStatus(providers.Get(provider));
             if (status == ProviderStatus.NotRegistered) throw new Exception("No such provider registered");
             StorageMap priceList = new StorageMap(Storage.CurrentContext, provider);
-            priceList.Put(symbol, currentPrice);
+            Map<uint, object> time2Price = new Map<uint, object>();
+            time2Price[blockIndex] = currentPrice;
+            priceList.Put(symbol, StdLib.Serialize(time2Price));
         }
 
-        public static object GetLatestPrice(string symbol, UInt160[] requiredProviders = null)
+        public static object GetPrice(string symbol, uint blockIndex, UInt160[] requiredProviders = null)
         {
             Map<UInt160, string> priceMap = new Map<UInt160, string>();
             if (providers != null && requiredProviders.Length > 0)
@@ -55,7 +56,8 @@ namespace PriceFeedService
                     if (status == ProviderStatus.Registered)
                     {
                         StorageMap priceList = new StorageMap(Storage.CurrentContext, key);
-                        priceMap[key] = priceList.Get(symbol);
+                        Map<uint, object> time2Price = (Map<uint, object>)StdLib.Deserialize(priceList.Get(symbol));
+                        priceMap[key] = (string)time2Price[blockIndex];
                     }
                 }
             }
@@ -65,7 +67,8 @@ namespace PriceFeedService
                 foreach (UInt160 key in registeredProvider)
                 {
                     StorageMap priceList = new StorageMap(Storage.CurrentContext, key);
-                    priceMap[key] = priceList.Get(symbol);
+                    Map<uint, object> time2Price = (Map<uint, object>)StdLib.Deserialize(priceList.Get(symbol));
+                    priceMap[key] = (string)time2Price[blockIndex];
                 }
             }
             return priceMap;
@@ -124,7 +127,7 @@ namespace PriceFeedService
 
         public static int test()
         {
-            return 11;
+            return 12;
         }
     }
 }

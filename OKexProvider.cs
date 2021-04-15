@@ -7,7 +7,7 @@ using System;
 
 namespace PriceFeedService
 {
-    [ContractPermission("0xcaa39a71815700bdf9cd418490779c66f14049bc", "updatePriceByProvider")]
+    [ContractPermission("0x154d607f59f9a950811016d765074865aac6f015", "updatePriceByProvider")]
     [ContractPermission("0xfffdc93764dbaddd97c48f252a53ea4643faa3fd", "destroy", "update")]
     public class OKexProvider : SmartContract
     {
@@ -22,26 +22,28 @@ namespace PriceFeedService
 
         [InitialValue("NWhJATyChXvaBqS9debbk47Uf2X33WtHtL", ContractParameterType.Hash160)]
         private static readonly UInt160 Owner = default; //  Replace it with your own address
-        [InitialValue("bc4940f1669c77908441cdf9bd005781719aa3ca", ContractParameterType.ByteArray)]
+        [InitialValue("15f0c6aa65480765d716108150a9f9597f604d15", ContractParameterType.ByteArray)]
         private static readonly UInt160 ProviderRegistry = default;
 
         public static string Name => "OKexProvider";
 
-        public static void GetLatestPriceRequest(ulong timestamp, string symbol) // BTC-USDT, 1597026383085
+        public static void GetPriceRequest(uint blockIndex, string symbol) // BTC-USDT, 1597026383085
         {
+            ulong timestamp = Ledger.GetBlock(blockIndex).Timestamp;
             if (Runtime.CallingScriptHash != ProviderRegistry) throw new Exception("No authorization");
             string symbolUrl = Prefix_Price_URL + Prefix_Price_InstId + symbol + Prefix_Price_Time + timestamp;
-            Oracle.Request(symbolUrl, filter, "getLatestPriceCallback", symbol, 100000000);
+            Oracle.Request(symbolUrl, filter, "getPriceCallback", blockIndex + "#" + symbol, 100000000);
         }
 
-        public static void GetLatestPriceCallback(string url, string userdata, OracleResponseCode code, string result)
+        public static void GetPriceCallback(string url, string userdata, OracleResponseCode code, string result)
         {
             if (Runtime.CallingScriptHash != Oracle.Hash) throw new Exception("No authorization");
             if (code != OracleResponseCode.Success) throw new Exception("Oracle response failure with code " + (byte)code);
 
             object[] arr = (object[])StdLib.JsonDeserialize(result); // ["11988.2"]
             string value = (string)arr[0];
-            Contract.Call(ProviderRegistry, "updatePriceByProvider", CallFlags.All, new object[] { userdata, value });
+            string[] data = StdLib.StringSplit(userdata, "#");
+            Contract.Call(ProviderRegistry, "updatePriceByProvider", CallFlags.All, new object[] { data[0], data[1], value });
         }
 
         public static void Update(ByteString nefFile, string manifest, object data)
