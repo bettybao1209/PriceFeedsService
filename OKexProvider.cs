@@ -7,7 +7,7 @@ using System;
 
 namespace PriceFeedService
 {
-    [ContractPermission("0xcb524d6c6d64a9440da96d02b9637e04dac615e2", "updatePrice")]
+    [ContractPermission("0xcaa39a71815700bdf9cd418490779c66f14049bc", "updatePriceByProvider")]
     [ContractPermission("0xfffdc93764dbaddd97c48f252a53ea4643faa3fd", "destroy", "update")]
     public class OKexProvider : SmartContract
     {
@@ -22,15 +22,15 @@ namespace PriceFeedService
 
         [InitialValue("NWhJATyChXvaBqS9debbk47Uf2X33WtHtL", ContractParameterType.Hash160)]
         private static readonly UInt160 Owner = default; //  Replace it with your own address
-        [InitialValue("e215c6da047e63b9026da90d44a9646d6c4d52cb", ContractParameterType.ByteArray)]
+        [InitialValue("bc4940f1669c77908441cdf9bd005781719aa3ca", ContractParameterType.ByteArray)]
         private static readonly UInt160 ProviderRegistry = default;
 
         public static string Name => "OKexProvider";
 
-        public static void GetLatestPriceRequest(string symbol) // BTC-USDT, 1597026383085
+        public static void GetLatestPriceRequest(ulong timestamp, string symbol) // BTC-USDT, 1597026383085
         {
-            ulong blockTime = Ledger.GetBlock(Ledger.CurrentIndex).Timestamp;
-            string symbolUrl = Prefix_Price_URL + Prefix_Price_InstId + symbol + Prefix_Price_Time + blockTime;
+            if (Runtime.CallingScriptHash != ProviderRegistry) throw new Exception("No authorization");
+            string symbolUrl = Prefix_Price_URL + Prefix_Price_InstId + symbol + Prefix_Price_Time + timestamp;
             Oracle.Request(symbolUrl, filter, "getLatestPriceCallback", symbol, 100000000);
         }
 
@@ -41,7 +41,7 @@ namespace PriceFeedService
 
             object[] arr = (object[])StdLib.JsonDeserialize(result); // ["11988.2"]
             string value = (string)arr[0];
-            Contract.Call(ProviderRegistry, "updatePrice", CallFlags.All, new object[] { userdata, value });
+            Contract.Call(ProviderRegistry, "updatePriceByProvider", CallFlags.All, new object[] { userdata, value });
         }
 
         public static void Update(ByteString nefFile, string manifest, object data)
@@ -60,7 +60,7 @@ namespace PriceFeedService
 
         public static int test()
         {
-            return 1;
+            return 2;
         }
     }
 }
