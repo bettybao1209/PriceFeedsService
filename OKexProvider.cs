@@ -59,10 +59,5 @@ namespace PriceFeedService
         }
 
         private static bool IsOwner() => Runtime.CheckWitness(Owner);
-
-        public static int test()
-        {
-            return 2;
-        }
     }
 }

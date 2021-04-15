@@ -128,10 +128,5 @@ namespace PriceFeedService
             if (value == null || value.Length == 0) return ProviderStatus.NotRegistered;
             return (ProviderStatus)(int)(BigInteger)value;
         }
-
-        public static int test()
-        {
-            return 12;
-        }
     }
 }
