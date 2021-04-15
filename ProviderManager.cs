@@ -14,11 +14,17 @@ namespace PriceFeedService
         Registered = 1
     }
 
+    public class PriceState
+    {
+        public string symbol;
+        public uint index;
+    }
+
     [ContractPermission("0xfffdc93764dbaddd97c48f252a53ea4643faa3fd", "destroy", "update")]
     [ContractPermission("*", "getPriceRequest")]
     public partial class ProviderManager : SmartContract
     {
-        private const byte Prefix_Providers = 1;
+        private const byte Prefix_Providers = 0x01;
         private static StorageMap providers => new StorageMap(Storage.CurrentContext, Prefix_Providers);
 
         [InitialValue("NWhJATyChXvaBqS9debbk47Uf2X33WtHtL", ContractParameterType.Hash160)]
@@ -40,14 +46,14 @@ namespace PriceFeedService
             ProviderStatus status = ByteString2ProviderStatus(providers.Get(provider));
             if (status == ProviderStatus.NotRegistered) throw new Exception("No such provider registered");
             StorageMap priceList = new StorageMap(Storage.CurrentContext, provider);
-            Map<uint, object> time2Price = new Map<uint, object>();
-            time2Price[blockIndex] = currentPrice;
-            priceList.Put(symbol, StdLib.Serialize(time2Price));
+            PriceState state = new PriceState { symbol = symbol, index = blockIndex };
+            priceList.Put(StdLib.Serialize(state), currentPrice);
         }
 
         public static object GetPrice(string symbol, uint blockIndex, UInt160[] requiredProviders = null)
         {
             Map<UInt160, string> priceMap = new Map<UInt160, string>();
+            PriceState state = new PriceState { symbol = symbol, index = blockIndex };
             if (providers != null && requiredProviders.Length > 0)
             {
                 foreach (UInt160 key in requiredProviders)
@@ -56,8 +62,7 @@ namespace PriceFeedService
                     if (status == ProviderStatus.Registered)
                     {
                         StorageMap priceList = new StorageMap(Storage.CurrentContext, key);
-                        Map<uint, object> time2Price = (Map<uint, object>)StdLib.Deserialize(priceList.Get(symbol));
-                        priceMap[key] = (string)time2Price[blockIndex];
+                        priceMap[key] = priceList.Get(StdLib.Serialize(state));
                     }
                 }
             }
@@ -67,8 +72,7 @@ namespace PriceFeedService
                 foreach (UInt160 key in registeredProvider)
                 {
                     StorageMap priceList = new StorageMap(Storage.CurrentContext, key);
-                    Map<uint, object> time2Price = (Map<uint, object>)StdLib.Deserialize(priceList.Get(symbol));
-                    priceMap[key] = (string)time2Price[blockIndex];
+                    priceMap[key] = priceList.Get(StdLib.Serialize(state));
                 }
             }
             return priceMap;

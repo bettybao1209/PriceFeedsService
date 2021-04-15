@@ -7,7 +7,7 @@ using System;
 
 namespace PriceFeedService
 {
-    [ContractPermission("0x154d607f59f9a950811016d765074865aac6f015", "updatePriceByProvider")]
+    [ContractPermission("0x6af9e0a8fd8d43dfcbfb32d475e408337dbb3152", "updatePriceByProvider")]
     [ContractPermission("0xfffdc93764dbaddd97c48f252a53ea4643faa3fd", "destroy", "update")]
     public class OKexProvider : SmartContract
     {
@@ -22,7 +22,7 @@ namespace PriceFeedService
 
         [InitialValue("NWhJATyChXvaBqS9debbk47Uf2X33WtHtL", ContractParameterType.Hash160)]
         private static readonly UInt160 Owner = default; //  Replace it with your own address
-        [InitialValue("15f0c6aa65480765d716108150a9f9597f604d15", ContractParameterType.ByteArray)]
+        [InitialValue("5231bb7d3308e475d432fbcbdf438dfda8e0f96a", ContractParameterType.ByteArray)]
         private static readonly UInt160 ProviderRegistry = default;
 
         public static string Name => "OKexProvider";
