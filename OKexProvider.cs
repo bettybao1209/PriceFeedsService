@@ -7,7 +7,8 @@ using System;
 
 namespace PriceFeedService
 {
-    [ContractPermission("0x6af9e0a8fd8d43dfcbfb32d475e408337dbb3152", "updatePriceByProvider")]
+    [ManifestExtra("Description", "OKex Provider")]
+    [ContractPermission("0xf7b01351680a378cac79a8e5760d8c109044690e", "updatePriceByProvider")]
     [ContractPermission("0xfffdc93764dbaddd97c48f252a53ea4643faa3fd", "destroy", "update")]
     public class OKexProvider : SmartContract
     {
@@ -22,12 +23,10 @@ namespace PriceFeedService
 
         [InitialValue("NWhJATyChXvaBqS9debbk47Uf2X33WtHtL", ContractParameterType.Hash160)]
         private static readonly UInt160 Owner = default; //  Replace it with your own address
-        [InitialValue("5231bb7d3308e475d432fbcbdf438dfda8e0f96a", ContractParameterType.ByteArray)]
+        [InitialValue("0e694490108c0d76e5a879ac8c370a685113b0f7", ContractParameterType.ByteArray)]
         private static readonly UInt160 ProviderRegistry = default;
 
-        public static string Name => "OKexProvider";
-
-        public static void GetPriceRequest(uint blockIndex, string symbol) // BTC-USDT, 1597026383085
+        public static void GetPriceRequest(uint blockIndex, string symbol) // 5830, BTC-USDT
         {
             ulong timestamp = Ledger.GetBlock(blockIndex).Timestamp;
             if (Runtime.CallingScriptHash != ProviderRegistry) throw new Exception("No authorization");
