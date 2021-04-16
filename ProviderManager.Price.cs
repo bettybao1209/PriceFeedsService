@@ -27,7 +27,7 @@ namespace PriceFeedService
             PriceState state = new PriceState
             {
                 CurrentPrice = currentPrice,
-                Expiration = Runtime.Time + 10
+                Expiration = Runtime.Time + OneYear
             };
             byte[] key = Helper.Concat((byte[])GetKey(symbol), (byte[])GetKey(blockIndex));
             priceList.Put(key, StdLib.Serialize(state));
