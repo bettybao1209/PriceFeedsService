@@ -10,18 +10,15 @@ namespace PriceFeedService
         public static bool RegisterProvider(UInt160 provider)
         {
             if (!IsOwner()) throw new Exception("No authorization");
-            ProviderStatus status = ByteString2ProviderStatus(Providers.Get(provider));
-            if (status == ProviderStatus.Registered) throw new Exception("Provider already registered");
-            byte[] registered = IssuerStatus2ByteArray(ProviderStatus.Registered);
-            Providers.Put(provider, (ByteString)registered);
+            if (Providers[provider] is not null) throw new InvalidOperationException("The provider already exists.");
+            Providers.Put(provider, 0);
             return true;
         }
 
         public static bool UnRegisterProvider(UInt160 provider)
         {
             if (!IsOwner()) throw new Exception("No authorization");
-            ProviderStatus status = ByteString2ProviderStatus(Providers.Get(provider));
-            if (status == ProviderStatus.NotRegistered) throw new Exception("No such provider registered");
+            if (Providers[provider] is null) throw new InvalidOperationException("The provider does not exist.");
             Providers.Delete(provider);
             return true;
         }
@@ -29,7 +26,7 @@ namespace PriceFeedService
         public static UInt160[] GetRegisteredProviders()
         {
             List<UInt160> ret = new();
-            Iterator providersList = Storage.Find(Storage.CurrentContext, new byte[] { Prefix_Providers }, FindOptions.RemovePrefix | FindOptions.KeysOnly);
+            Iterator providersList = Providers.Find(FindOptions.RemovePrefix | FindOptions.KeysOnly);
             while (providersList.Next())
             {
                 ret.Add((UInt160)providersList.Value);

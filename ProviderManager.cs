@@ -8,23 +8,25 @@ using System.Numerics;
 
 namespace PriceFeedService
 {
-    public enum ProviderStatus
-    {
-        NotRegistered = 0,
-        Registered = 1
-    }
-
     [ManifestExtra("Description", "Neo Provider Manager")]
     [ContractPermission("0xfffdc93764dbaddd97c48f252a53ea4643faa3fd", "destroy", "update")]
     [ContractPermission("*", "getPriceRequest")]
     public partial class ProviderManager : SmartContract
     {
         private const byte Prefix_Providers = 0x01;
+        private const byte Prefix_Symbol = 0x02;
         private static StorageMap Providers => new(Storage.CurrentContext, Prefix_Providers);
+        private static StorageMap Symbols => new(Storage.CurrentContext, Prefix_Symbol);
 
         private const uint OneYear = 365 * 24 * 3600;
         [InitialValue("NWhJATyChXvaBqS9debbk47Uf2X33WtHtL", ContractParameterType.Hash160)]
         private static readonly UInt160 Owner = default; //  Replace it with your own address
+
+        public static void _deploy(object data, bool update)
+        {
+            if (update) return;
+            Symbols.Put("btc-usdt", 0);
+        }
 
         public static void Update(ByteString nefFile, string manifest, object data)
         {
@@ -39,17 +41,15 @@ namespace PriceFeedService
         }
 
         private static bool IsOwner() => Runtime.CheckWitness(Owner);
-        private static byte[] IssuerStatus2ByteArray(ProviderStatus value) => ((BigInteger)(int)value).ToByteArray();
 
-        private static ProviderStatus ByteString2ProviderStatus(ByteString value)
+        private static ByteString GetKey(string data)
         {
-            if (value == null || value.Length == 0) return ProviderStatus.NotRegistered;
-            return (ProviderStatus)(int)(BigInteger)value;
+            return CryptoLib.ripemd160(data);
         }
 
-        private static ByteString GetKey(string symbol)
+        public static int test()
         {
-            return CryptoLib.ripemd160(symbol);
+            return 12;
         }
     }
 }
