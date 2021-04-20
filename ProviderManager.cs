@@ -9,7 +9,6 @@ using System.Numerics;
 namespace PriceFeedService
 {
     [ManifestExtra("Description", "Neo PriceFeeds Provider Manager")]
-    [ContractPermission("0xfffdc93764dbaddd97c48f252a53ea4643faa3fd", "destroy", "update")]
     [ContractPermission("*", "getPriceRequest")]
     public partial class ProviderManager : SmartContract
     {

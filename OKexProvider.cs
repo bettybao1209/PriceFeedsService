@@ -9,7 +9,6 @@ namespace PriceFeedService
 {
     [ManifestExtra("Description", "OKex Provider")]
     [ContractPermission("0x0d12df57f86ee9d2350636da1ff2e2f6376b6202", "updatePriceByProvider")]
-    [ContractPermission("0xfffdc93764dbaddd97c48f252a53ea4643faa3fd", "destroy", "update")]
     public class OKexProvider : SmartContract
     {
         public const string Prefix_Price_URL = "https://www.okex.com/api/v5/market/history-candles?bar=1m&limit=1";
@@ -18,7 +17,6 @@ namespace PriceFeedService
         // { "code": "0", "msg": "", "data": [["1597026360000","11983.2","11988.5","11980.2","11988.2","26.43284234","316742.81553508"]]}
         public const string filter = "$.data[0][4]";
         public const long gasForResponse = Oracle.MinimumResponseFee; // TBD
-        private static StorageMap price => new StorageMap(Storage.CurrentContext, nameof(price));
 
         [InitialValue("NWhJATyChXvaBqS9debbk47Uf2X33WtHtL", ContractParameterType.Hash160)]
         private static readonly UInt160 Owner = default; //  Replace it with your own address

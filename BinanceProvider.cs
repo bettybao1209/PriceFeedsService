@@ -9,7 +9,6 @@ namespace PriceFeedService
 {
     [ManifestExtra("Description", "Binance Provider")]
     [ContractPermission("0x0d12df57f86ee9d2350636da1ff2e2f6376b6202", "updatePriceByProvider")]
-    [ContractPermission("0xfffdc93764dbaddd97c48f252a53ea4643faa3fd", "destroy", "update")]
     public class BinanceProvider : SmartContract
     {
         public const string Prefix_Price_URL = "https://binance.com/api/v3/klines?interval=1m&limit=1";
@@ -19,7 +18,6 @@ namespace PriceFeedService
         // "0.57000000", "20.52000000", "3039601.46000000"]]
         public const string filter = "$[0][4]";
         public const long gasForResponse = Oracle.MinimumResponseFee; // TBD
-        private static StorageMap price => new StorageMap(Storage.CurrentContext, nameof(price));
 
         [InitialValue("NWhJATyChXvaBqS9debbk47Uf2X33WtHtL", ContractParameterType.Hash160)]
         private static readonly UInt160 Owner = default; //  Replace it with your own address
