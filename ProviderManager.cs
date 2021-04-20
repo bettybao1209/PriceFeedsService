@@ -45,10 +45,5 @@ namespace PriceFeedService
         {
             return CryptoLib.ripemd160(data);
         }
-
-        public static int test()
-        {
-            return 12;
-        }
     }
 }
