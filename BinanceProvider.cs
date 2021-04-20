@@ -13,7 +13,7 @@ namespace PriceFeedService
     public class BinanceProvider : SmartContract
     {
         public const string Prefix_Price_URL = "https://binance.com/api/v3/klines?interval=1m&limit=1";
-        public const string Prefix_Price_InstId = "&symbol=";  // NEOUSDT
+        public const string Prefix_Price_InstId = "&symbol=";  // BTCUSDT
         public const string Prefix_Price_Time = "&endTime=";
         // [[1511149320000,"36.00000000","36.00000000","36.00000000","36.00000000","1.14000000",1511149379999,"41.04000000",2,
         // "0.57000000", "20.52000000", "3039601.46000000"]]
@@ -23,12 +23,12 @@ namespace PriceFeedService
 
         [InitialValue("NWhJATyChXvaBqS9debbk47Uf2X33WtHtL", ContractParameterType.Hash160)]
         private static readonly UInt160 Owner = default; //  Replace it with your own address
-        [InitialValue("02626b37f6e2f21fda360635d2e96ef857df120d", ContractParameterType.ByteArray)]
+        [InitialValue("02626b37f6e2f21fda360635d2e96ef857df120d", ContractParameterType.Hash160)]
         private static readonly UInt160 ProviderRegistry = default;
 
-        public static void GetPriceRequest(uint blockIndex, string symbol) // 5830, neo-usdt
+        public static void GetPriceRequest(uint blockIndex, string symbol) // 5830, BTC-USDT
         {
-            string newSymbol = StandardizeSymbol(symbol); // NEOUSDT
+            string newSymbol = StandardizeSymbol(symbol); // BTCUSDT
             ulong timestamp = Ledger.GetBlock(blockIndex).Timestamp;
             if (Runtime.CallingScriptHash != ProviderRegistry) throw new Exception("No authorization");
             string symbolUrl = Prefix_Price_URL + Prefix_Price_InstId + newSymbol + Prefix_Price_Time + timestamp;
@@ -62,19 +62,8 @@ namespace PriceFeedService
 
         private static string StandardizeSymbol(string symbol)
         {
-            byte[] ret = new byte[symbol.Length - 1];
-            int i = 0;
-            foreach (char c in symbol)
-            {
-                if (c == '-') continue;
-                ret[i++] = (byte)(char)(c ^ 0x20);
-            }
-            return (ByteString)ret;
-        }
-
-        public static int test()
-        {
-            return 5;
+            string[] data = StdLib.StringSplit(symbol, "-");
+            return data[0] + data[1];
         }
     }
 }

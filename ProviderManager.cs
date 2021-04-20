@@ -8,7 +8,7 @@ using System.Numerics;
 
 namespace PriceFeedService
 {
-    [ManifestExtra("Description", "Neo Provider Manager")]
+    [ManifestExtra("Description", "Neo PriceFeeds Provider Manager")]
     [ContractPermission("0xfffdc93764dbaddd97c48f252a53ea4643faa3fd", "destroy", "update")]
     [ContractPermission("*", "getPriceRequest")]
     public partial class ProviderManager : SmartContract
@@ -25,7 +25,7 @@ namespace PriceFeedService
         public static void _deploy(object data, bool update)
         {
             if (update) return;
-            Symbols.Put("btc-usdt", 0);
+            Symbols.Put("BTC-USDT", 0);
         }
 
         public static void Update(ByteString nefFile, string manifest, object data)

@@ -7,6 +7,7 @@ using System;
 
 namespace PriceFeedService
 {
+    [ManifestExtra("Description", "OKex Provider")]
     [ContractPermission("0x0d12df57f86ee9d2350636da1ff2e2f6376b6202", "updatePriceByProvider")]
     [ContractPermission("0xfffdc93764dbaddd97c48f252a53ea4643faa3fd", "destroy", "update")]
     public class OKexProvider : SmartContract
@@ -24,12 +25,11 @@ namespace PriceFeedService
         [InitialValue("02626b37f6e2f21fda360635d2e96ef857df120d", ContractParameterType.ByteArray)]
         private static readonly UInt160 ProviderRegistry = default;
 
-        public static void GetPriceRequest(uint blockIndex, string symbol) // 5830, btc-usdt
+        public static void GetPriceRequest(uint blockIndex, string symbol) // 5830, BTC-USDT
         {
-            string newSymbol = StandardizeSymbol(symbol); // BTC-USDT
             ulong timestamp = Ledger.GetBlock(blockIndex).Timestamp;
             if (Runtime.CallingScriptHash != ProviderRegistry) throw new Exception("No authorization");
-            string symbolUrl = Prefix_Price_URL + Prefix_Price_InstId + newSymbol + Prefix_Price_Time + timestamp;
+            string symbolUrl = Prefix_Price_URL + Prefix_Price_InstId + symbol + Prefix_Price_Time + timestamp;
             Oracle.Request(symbolUrl, filter, "getPriceCallback", blockIndex + "#" + symbol, 100000000);
         }
 
@@ -57,26 +57,5 @@ namespace PriceFeedService
         }
 
         private static bool IsOwner() => Runtime.CheckWitness(Owner);
-
-        private static string StandardizeSymbol(string symbol)
-        {
-            byte[] ret = (byte[])(ByteString)symbol;
-            int i = 0;
-            foreach (char c in symbol)
-            {
-                if (c == '-')
-                {
-                    ret[i++] = (byte)c;
-                    continue;
-                }
-                ret[i++] = (byte)(char)(c ^ 0x20);
-            }
-            return (ByteString)ret;
-        }
-
-        public static int test()
-        {
-            return 3;
-        }
     }
 }
