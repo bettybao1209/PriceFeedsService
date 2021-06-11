@@ -8,7 +8,7 @@ using System;
 namespace PriceFeedService
 {
     [ManifestExtra("Description", "Binance Provider")]
-    [ContractPermission("0x0d12df57f86ee9d2350636da1ff2e2f6376b6202", "updatePriceByProvider")]
+    [ContractPermission("0xf1ec3a0857d5b1ae11e383aeb9108e4fe8ae378b", "updatePriceByProvider")]
     public class BinanceProvider : SmartContract
     {
         public const string Prefix_Price_URL = "https://binance.com/api/v3/klines?interval=1m&limit=1";
@@ -21,7 +21,7 @@ namespace PriceFeedService
 
         [InitialValue("NWhJATyChXvaBqS9debbk47Uf2X33WtHtL", ContractParameterType.Hash160)]
         private static readonly UInt160 Owner = default; //  Replace it with your own address
-        [InitialValue("02626b37f6e2f21fda360635d2e96ef857df120d", ContractParameterType.Hash160)]
+        [InitialValue("8b37aee84f8e10b9ae83e311aeb1d557083aecf1", ContractParameterType.ByteArray)]
         private static readonly UInt160 ProviderRegistry = default;
 
         public static void GetPriceRequest(uint blockIndex, string symbol) // 5830, BTC-USDT

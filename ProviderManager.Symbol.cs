@@ -24,13 +24,13 @@ namespace PriceFeedService
 
         public static string[] GetAvailableSymbols()
         {
-            List<string> ret = null;
+            List<string> ret = new();
             Iterator symbolList = Symbols.Find(FindOptions.RemovePrefix | FindOptions.KeysOnly);
             while (symbolList.Next())
             {
                 ret.Add((string)symbolList.Value);
             }
-            return ret ?? new string[0];
+            return ret;
         }
     }
 }
