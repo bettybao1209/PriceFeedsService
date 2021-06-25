@@ -32,6 +32,7 @@ namespace PriceFeedService
                 Expiration = Runtime.Time + OneYear
             };
             byte[] key = Helper.Concat((byte[])GetKey(symbol), (byte[])GetKey(blockIndex));
+            Storage.Put(Storage.CurrentContext, new byte[] { Prefix_Block }, blockIndex);
             priceList.Put(key, StdLib.Serialize(state));
         }
 

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Neo.SmartContract.Framework" Version="3.0.0-CI00298" />
+    <PackageReference Include="Neo.SmartContract.Framework" Version="3.0.0-CI00335" />
   </ItemGroup>
 
 </Project>

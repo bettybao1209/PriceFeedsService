@@ -8,10 +8,10 @@ using System;
 namespace PriceFeedService
 {
     [ManifestExtra("Description", "OKex Provider")]
-    [ContractPermission("0xf1ec3a0857d5b1ae11e383aeb9108e4fe8ae378b", "updatePriceByProvider")]
+    [ContractPermission("0x08148cdc93bf1868e4b8b6c6de31829d1d260531", "updatePriceByProvider")]
     public class OKexProvider : SmartContract
     {
-        public const string Prefix_Price_URL = "https://www.okex.com/api/v5/market/history-candles?bar=1m&limit=1";
+        public const string Prefix_Price_URL = "https://www.okex.com/api/v5/market/candles?bar=1m&limit=1";
         public const string Prefix_Price_InstId = "&instId=";
         public const string Prefix_Price_Time = "&after=";
         // { "code": "0", "msg": "", "data": [["1597026360000","11983.2","11988.5","11980.2","11988.2","26.43284234","316742.81553508"]]}
@@ -20,7 +20,7 @@ namespace PriceFeedService
 
         [InitialValue("NWhJATyChXvaBqS9debbk47Uf2X33WtHtL", ContractParameterType.Hash160)]
         private static readonly UInt160 Owner = default; //  Replace it with your own address
-        [InitialValue("8b37aee84f8e10b9ae83e311aeb1d557083aecf1", ContractParameterType.ByteArray)]
+        [InitialValue("3105261d9d8231dec6b6b8e46818bf93dc8c1408", ContractParameterType.ByteArray)]
         private static readonly UInt160 ProviderRegistry = default;
 
         public static void GetPriceRequest(uint blockIndex, string symbol) // 5830, BTC-USDT
