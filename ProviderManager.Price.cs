@@ -10,6 +10,7 @@ namespace PriceFeedService
     {
         public static uint TriggerCurrentPrice(string symbol)
         {
+            if (!IsOwner()) throw new Exception("No authorization");
             if (Symbols[symbol] is null) throw new Exception("Symbol has not registered.");
             UInt160[] registeredProviders = GetRegisteredProviders();
             uint currentIndex = Ledger.CurrentIndex;
