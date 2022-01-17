@@ -4,11 +4,12 @@ using Neo.SmartContract.Framework;
 using Neo.SmartContract.Framework.Native;
 using Neo.SmartContract.Framework.Services;
 using System;
+using Neo.SmartContract.Framework.Attributes;
 
 namespace PriceFeedService
 {
     [ManifestExtra("Description", "OKex Provider")]
-    [ContractPermission("0x08148cdc93bf1868e4b8b6c6de31829d1d260531", "updatePriceByProvider")]
+    [ContractPermission("0x64c3f5a2540c344cfbaf069d37478b0f04d5a0e4", "updatePriceByProvider")]
     public class OKexProvider : SmartContract
     {
         public const string Prefix_Price_URL = "https://www.okex.com/api/v5/market/candles?bar=1m&limit=1";
@@ -20,7 +21,7 @@ namespace PriceFeedService
 
         [InitialValue("NWhJATyChXvaBqS9debbk47Uf2X33WtHtL", ContractParameterType.Hash160)]
         private static readonly UInt160 Owner = default; //  Replace it with your own address
-        [InitialValue("3105261d9d8231dec6b6b8e46818bf93dc8c1408", ContractParameterType.ByteArray)]
+        [InitialValue("e4a0d5040f8b47379d06affb4c340c54a2f5c364", ContractParameterType.ByteArray)]
         private static readonly UInt160 ProviderRegistry = default;
 
         public static void GetPriceRequest(uint blockIndex, string symbol) // 5830, BTC-USDT
